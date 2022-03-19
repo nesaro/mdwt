@@ -44,7 +44,9 @@ def node_printer(node, level=0):
 
 
 def extract_name_from_markdown_path(x):
-    return os.path.basename(x)[:-len('.md')]
+    if x.startswith(WIKI_PATH):
+        return x[len(WIKI_PATH):-len('.md')]
+    return x[:-len('.md')]
 
 def generate_path_from_name(x):
     return os.path.join(WIKI_PATH, f"{x}.md")
@@ -191,7 +193,7 @@ if __name__ == "__main__":
                     print(f"file {file_path} failed")
                     continue
     elif args.command in ("zettelkasten", 'z'):
-        file_paths = glob.glob(os.path.join(WIKI_PATH, '*.md'))
+        file_paths = glob.glob(os.path.join(WIKI_PATH, '**/*.md'), recursive=True)
         sorted_file_paths = sorted(file_paths, key=lambda x:len(x))
         nodes = {}
         root_node_names = set()
