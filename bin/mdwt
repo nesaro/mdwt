@@ -104,6 +104,9 @@ if __name__ == "__main__":
     parser_l = subparsers.add_parser('links', aliases=['l'])
     parser_l.add_argument('filename', type=str, help='File to search links for')
 
+    parser_l = subparsers.add_parser('link_ratio', aliases=['lr'])
+    parser_l.add_argument('filename', type=str, help='File to get link ratio for')
+
     parser_g = subparsers.add_parser('graph', aliases=['g'])
     parser_g.add_argument('filename', type=str, help='File to generate a graph for')
 
@@ -173,6 +176,21 @@ if __name__ == "__main__":
                 md_parser = marko.Markdown()
                 parsed = md_parser.parse(f.read())
                 print(list(find_links_in_markdown_text_recursive(parsed)))
+    elif args.command in ("link_ratio", 'lr'):
+        if not os.path.exists(args.filename):
+            print("File does not exist")
+            sys.exit(1)
+        else:
+            with open(args.filename) as f:
+                file_content = f.read()
+                md_parser = marko.Markdown()
+                parsed = md_parser.parse(file_content)
+                number_of_links = len(list(find_links_in_markdown_text_recursive(parsed)))
+                number_of_words = len(file_content.split())
+                if number_of_links == 0:
+                    print(number_of_words * 10, args.filename)
+                else:
+                    print(number_of_words // number_of_links, args.filename)
     elif args.command in ("todo", 'd'):
         file_paths = glob.glob(os.path.join(WIKI_PATH, '*.md'))
         for file_path in file_paths:
