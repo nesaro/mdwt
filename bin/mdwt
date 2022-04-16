@@ -19,14 +19,18 @@ WIKI_PATH = os.path.join(os.environ['HOME'], 'wiki/')
 METADATA_FILE = os.path.join(os.environ['HOME'], 'wiki.metadata.yaml')
 
 @dataclass
-class ZettleNode:
+class ZettelNode:
     path: str
     added_to_repo_on: datetime.datetime
-    children: List['ZettleNode'] = field(default_factory=list)
+    children: List['ZettelNode'] = field(default_factory=list)
 
     @property
     def name(self):
         return extract_name_from_markdown_path(self.path)
+
+    @propery
+    def folder(self) -> str:
+        return '/'.join(name.split('/')[:-2])
 
     @classmethod
     def from_path(cls, path, *, metadata):
@@ -89,6 +93,21 @@ def find_links_in_file(path):
         parsed = md_parser.parse(f.read())
         return [x[0] for x in find_links_in_markdown_text_recursive(parsed)]
 
+
+def to_absolute_path(current_path, relative_path):
+    current_path_list = current_path.split('/')
+    while relative_path.startswith('../'):
+        current_path_list.pop(None)
+        relative_path = relative_path[len('../')]
+    if not current_path_list:
+        return relative_path
+    return "/".join(current_path_list) + "/" + relative_path
+
+def find_links_in_node(node: ZettelNode):
+    path = generate_path_from_name(node)
+    return [to_absolute_path(node.folder, x) for x in find_links_in_file(path)]
+    
+
 def discover_files_that_mention_word(word):
     import subprocess
     sp = subprocess.run(['ag', '-l', '-G', '\\\*.md', '-Q', word, WIKI_PATH], capture_output=True)
@@ -110,7 +129,7 @@ if __name__ == "__main__":
     parser_g = subparsers.add_parser('graph', aliases=['g'])
     parser_g.add_argument('filename', type=str, help='File to generate a graph for')
 
-    parser_z = subparsers.add_parser('zettelkasten', aliases=['z'], help='Generate Zettlekasten file based on git time')
+    parser_z = subparsers.add_parser('zettelkasten', aliases=['z'], help='Generate Zettelkasten file based on git time')
 
     args = parser.parse_args()
 
@@ -133,7 +152,7 @@ if __name__ == "__main__":
                 if current != root and current == "zettelKasten":
                     continue
                 try:
-                    destinations = find_links_in_file(generate_path_from_name(current))
+                    destinations = find_links_in_node(current)
                     if len(destinations) > SAMPLE_LIMIT:
                         destinations = random.sample(destinations, SAMPLE_LIMIT)
                 except FileNotFoundError:
@@ -218,7 +237,7 @@ if __name__ == "__main__":
         with metadata_context() as metadata:
             for path in sorted_file_paths:
                 try:
-                    new_node = ZettleNode.from_path(path, metadata=metadata)
+                    new_node = ZettelNode.from_path(path, metadata=metadata)
                 except ValueError:
                     print(f"failed {path}")
                     continue
