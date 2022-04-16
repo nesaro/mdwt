@@ -21,16 +21,20 @@ METADATA_FILE = os.path.join(os.environ['HOME'], 'wiki.metadata.yaml')
 @dataclass
 class ZettelNode:
     path: str
-    added_to_repo_on: datetime.datetime
-    children: List['ZettelNode'] = field(default_factory=list)
 
     @property
     def name(self):
         return extract_name_from_markdown_path(self.path)
 
-    @propery
+    @property
     def folder(self) -> str:
-        return '/'.join(name.split('/')[:-2])
+        return '/'.join(self.name.split('/')[:-2])
+
+
+@dataclass
+class ZettelNodeWithDate(ZettelNode):
+    added_to_repo_on: datetime.datetime
+    children: List['ZettelNode'] = field(default_factory=list)
 
     @classmethod
     def from_path(cls, path, *, metadata):
@@ -94,18 +98,22 @@ def find_links_in_file(path):
         return [x[0] for x in find_links_in_markdown_text_recursive(parsed)]
 
 
-def to_absolute_path(current_path, relative_path):
+def to_relative_root_path(current_path, relative_path):
     current_path_list = current_path.split('/')
     while relative_path.startswith('../'):
-        current_path_list.pop(None)
+        try:
+            current_path_list.pop()
+        except IndexError:
+            pass
         relative_path = relative_path[len('../')]
     if not current_path_list:
         return relative_path
-    return "/".join(current_path_list) + "/" + relative_path
+    return ("/".join(current_path_list) + "/" + relative_path).lstrip("/")
 
 def find_links_in_node(node: ZettelNode):
-    path = generate_path_from_name(node)
-    return [to_absolute_path(node.folder, x) for x in find_links_in_file(path)]
+    path = generate_path_from_name(node.name)
+    result = [to_relative_root_path(node.folder, x) for x in find_links_in_file(path)]
+    return result
     
 
 def discover_files_that_mention_word(word):
@@ -137,54 +145,54 @@ if __name__ == "__main__":
         if not os.path.exists(args.filename):
             print("File does not exist")
             sys.exit(1)
-        else:
-            MAX_DEPTH=3
-            import networkx as nx
-            G = nx.DiGraph()
-            already_visited =  set()
-            root = extract_name_from_markdown_path(args.filename)
-            nodes_to_visit = {(root, 0)}
-            G.add_node(root)
-            while nodes_to_visit:
-                current, depth = nodes_to_visit.pop()
-                if depth > MAX_DEPTH:
-                    continue
-                if current != root and current == "zettelKasten":
-                    continue
-                try:
-                    destinations = find_links_in_node(current)
-                    if len(destinations) > SAMPLE_LIMIT:
-                        destinations = random.sample(destinations, SAMPLE_LIMIT)
-                except FileNotFoundError:
-                    pass
-                else:
-                    for destination in destinations:
-                        if destination.startswith('http') or destination.startswith('file') or destination.startswith("~/"):
-                            continue
-                        if destination.endswith(".md"):
-                            destination = destination[:-3]
-                        if destination not in already_visited:
-                            G.add_node(destination)
-                            nodes_to_visit.add((destination, depth+1))
-                        G.add_edge(current, destination)
-                already_visited.add(current)
-            nodes_that_mention = [extract_name_from_markdown_path(x) for x in discover_files_that_mention_word(root)]
-            for back_mention in nodes_that_mention:
-                if root != "zettelKasten" and back_mention == "zettelKasten":
-                    continue
-                #G.add_node(back_mention)
-                try:
-                    destinations = find_links_in_file(generate_path_from_name(back_mention))
-                except Exception:
-                    continue
+        MAX_DEPTH=300
+        import networkx as nx
+        G = nx.DiGraph()
+        already_visited =  set()
+        root = extract_name_from_markdown_path(args.filename)
+        nodes_to_visit = {(root, 0)}
+        G.add_node(root)
+        while nodes_to_visit:
+            current, depth = nodes_to_visit.pop()
+            if depth > MAX_DEPTH:
+                continue
+            if current != root and current == "zettelKasten":
+                continue
+            current_node = ZettelNode(path=generate_path_from_name(current))
+            try:
+                destinations = find_links_in_node(current_node)
+                if len(destinations) > SAMPLE_LIMIT:
+                    destinations = random.sample(destinations, SAMPLE_LIMIT)
+            except FileNotFoundError:
+                pass
+            else:
                 for destination in destinations:
-                    if destination in set(nodes_that_mention) | {root}:
-                        G.add_edge(back_mention, destination)
-            import matplotlib.pyplot as plt
-            pos = nx.spring_layout(G, k=1)
-            #pos = nx.planar_layout(G)
-            nx.draw(G, pos, with_labels=True)
-            plt.show()
+                    if destination.startswith('http') or destination.startswith('file') or destination.startswith("~/"):
+                        continue
+                    if destination.endswith(".md"):
+                        destination = destination[:-3]
+                    if destination not in already_visited:
+                        G.add_node(destination)
+                        nodes_to_visit.add((destination, depth+1))
+                    G.add_edge(current, destination)
+            already_visited.add(current)
+        nodes_that_mention = [extract_name_from_markdown_path(x) for x in discover_files_that_mention_word(root)]
+        for back_mention in nodes_that_mention:
+            if root != "zettelKasten" and back_mention == "zettelKasten":
+                continue
+            #G.add_node(back_mention)
+            try:
+                destinations = find_links_in_file(generate_path_from_name(back_mention))
+            except Exception:
+                continue
+            for destination in destinations:
+                if destination in set(nodes_that_mention) | {root}:
+                    G.add_edge(back_mention, destination)
+        import matplotlib.pyplot as plt
+        pos = nx.spring_layout(G, k=1)
+        #pos = nx.planar_layout(G)
+        nx.draw(G, pos, with_labels=True)
+        plt.show()
                 
     elif args.command in ("links", 'l'):
         if not os.path.exists(args.filename):
@@ -237,7 +245,7 @@ if __name__ == "__main__":
         with metadata_context() as metadata:
             for path in sorted_file_paths:
                 try:
-                    new_node = ZettelNode.from_path(path, metadata=metadata)
+                    new_node = ZettelNodeWithDate.from_path(path, metadata=metadata)
                 except ValueError:
                     print(f"failed {path}")
                     continue
