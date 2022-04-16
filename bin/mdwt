@@ -105,7 +105,7 @@ def to_relative_root_path(current_path, relative_path):
             current_path_list.pop()
         except IndexError:
             pass
-        relative_path = relative_path[len('../')]
+        relative_path = relative_path[len('../'):]
     if not current_path_list:
         return relative_path
     return ("/".join(current_path_list) + "/" + relative_path).lstrip("/")
