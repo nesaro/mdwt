@@ -27,6 +27,10 @@ class ZettelNode:
         return extract_name_from_markdown_path(self.path)
 
     @property
+    def basename(self):
+        return extract_name_from_markdown_path(self.path).split("/")[-1]
+
+    @property
     def folder(self) -> str:
         return '/'.join(self.name.split('/')[:-2])
 
@@ -46,7 +50,7 @@ class ZettelNodeWithDate(ZettelNode):
 
 
 def node_printer(node, level=0):
-    print(" " * level + f" * [{node.name}]({node.name}) [{node.added_to_repo_on.date()}]")
+    print(" " * level + f" * [{node.name}]({node.name}) [{node.added_to_repo_on.date()}] - [[{node.basename}]]")
     for child in node.children_sorted_by_date:
         node_printer(child, level=level+1)
 
