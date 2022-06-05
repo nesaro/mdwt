@@ -50,7 +50,7 @@ class ZettelNodeWithDate(ZettelNode):
 
 
 def node_printer(node, level=0):
-    print(" " * level + f" * [{node.name}]({node.name}) [{node.added_to_repo_on.date()}] - [[{node.basename}]]")
+    print(" " * level + f" * [{node.name}](../{node.name}) [{node.added_to_repo_on.date()}] - [[{node.basename}]]")
     for child in node.children_sorted_by_date:
         node_printer(child, level=level+1)
 
@@ -257,6 +257,8 @@ if __name__ == "__main__":
                 if re.match(r"\d{4}-\d{2}-\d{2}", new_node.name):
                     continue
                 if re.match(r"diary\/.*", new_node.name):
+                    continue
+                if re.match(r"\d{14}.*", new_node.name):
                     continue
                 try:
                     *_, last = (existing_node for x, existing_node in nodes.items() if new_node.name.startswith(x))
