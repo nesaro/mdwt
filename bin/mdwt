@@ -258,6 +258,8 @@ if __name__ == "__main__":
                     continue
                 if re.match(r"diary\/.*", new_node.name):
                     continue
+                if re.match(r"tasknotes\/.*", new_node.name):
+                    continue
                 if re.match(r"\d{14}.*", new_node.name):
                     continue
                 try:
