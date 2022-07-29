@@ -274,7 +274,7 @@ if __name__ == "__main__":
         sorted_nodes = sorted(root_nodes.values(), key=lambda x:(x.added_to_repo_on, x.name))
         print("""# ZettelKasten
 
-[[20220729205531]]
+20220729205531
 generated with
 
 `mdwt z > ~/wiki/zettelKasten.md`
