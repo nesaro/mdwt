@@ -12,11 +12,15 @@ from dataclasses import dataclass, field
 import datetime
 import yaml
 import random
+import re
 
 
-SAMPLE_LIMIT = 30
-WIKI_PATH = os.path.join(os.environ['HOME'], 'wiki/')
-METADATA_FILE = os.path.join(os.environ['HOME'], 'wiki.metadata.yaml')
+
+SAMPLE_LIMIT = 6000
+HOME_PATH = os.environ['HOME']
+WIKI_PATH = os.path.join(HOME_PATH, 'wiki/')
+METADATA_FILE = os.path.join(HOME_PATH, 'wiki.metadata.yaml')
+ZETTLR_LINK = re.compile(r"\[\[(.*)\]\]")
 
 @dataclass
 class ZettelNode:
@@ -94,12 +98,19 @@ def find_links_in_markdown_text_recursive(marko_node):
     elif hasattr(marko_node, 'children') and not isinstance(marko_node.children, str):
         for child in marko_node.children:
             yield from find_links_in_markdown_text_recursive(child)
+    elif isinstance(marko_node, marko.inline.RawText):
+        content = marko_node.children
+        if search:= ZETTLR_LINK.search(content):
+            link_content = search.group(1)
+            print(link_content)
 
 def find_links_in_file(path):
     with open(path) as f:
         md_parser = marko.Markdown()
         parsed = md_parser.parse(f.read())
-        return [x[0] for x in find_links_in_markdown_text_recursive(parsed)]
+        result = [x[0] for x in find_links_in_markdown_text_recursive(parsed)]
+        print(result)
+        return result
 
 
 def to_relative_root_path(current_path, relative_path):
@@ -116,7 +127,9 @@ def to_relative_root_path(current_path, relative_path):
 
 def find_links_in_node(node: ZettelNode):
     path = generate_path_from_name(node.name)
+    print(path)
     result = [to_relative_root_path(node.folder, x) for x in find_links_in_file(path)]
+    print(node, result)
     return result
     
 
@@ -125,7 +138,7 @@ def discover_files_that_mention_word(word):
     sp = subprocess.run(['ag', '-l', '-G', '\\\*.md', '-Q', word, WIKI_PATH], capture_output=True)
     return sp.stdout.decode().split()
     
-if __name__ == "__main__":
+def main():
     # create the top-level parser
     parser = argparse.ArgumentParser(prog='mdwt')
     subparsers = parser.add_subparsers(title="command", dest='command', help='sub-command help')
@@ -149,7 +162,7 @@ if __name__ == "__main__":
         if not os.path.exists(args.filename):
             print("File does not exist")
             sys.exit(1)
-        MAX_DEPTH=300
+        MAX_DEPTH=1000
         import networkx as nx
         G = nx.DiGraph()
         already_visited =  set()
@@ -158,16 +171,19 @@ if __name__ == "__main__":
         G.add_node(root)
         while nodes_to_visit:
             current, depth = nodes_to_visit.pop()
-            if depth > MAX_DEPTH:
-                continue
-            if current != root and current == "zettelKasten":
-                continue
+            print(current, nodes_to_visit)
+            #if depth > MAX_DEPTH:
+            #    continue
+            #if current != root and current == "zettelKasten":
+            #    continue
             current_node = ZettelNode(path=generate_path_from_name(current))
             try:
                 destinations = find_links_in_node(current_node)
+                print(destinations)
                 if len(destinations) > SAMPLE_LIMIT:
                     destinations = random.sample(destinations, SAMPLE_LIMIT)
             except FileNotFoundError:
+                print("Not found?", current)
                 pass
             else:
                 for destination in destinations:
@@ -193,7 +209,7 @@ if __name__ == "__main__":
                 if destination in set(nodes_that_mention) | {root}:
                     G.add_edge(back_mention, destination)
         import matplotlib.pyplot as plt
-        pos = nx.spring_layout(G, k=1)
+        pos = nx.spring_layout(G, k=1, iterations=5000)
         #pos = nx.planar_layout(G)
         nx.draw(G, pos, with_labels=True)
         plt.show()
@@ -286,3 +302,5 @@ generated with
 
 
 
+if __name__ == "__main__":
+    main()
