@@ -20,7 +20,8 @@ SAMPLE_LIMIT = 6000
 HOME_PATH = os.environ['HOME']
 WIKI_PATH = os.path.join(HOME_PATH, 'wiki/')
 METADATA_FILE = os.path.join(HOME_PATH, 'wiki.metadata.yaml')
-ZETTLR_LINK = re.compile(r"\[\[(.*)\]\]")
+ZETTLR_LINK = re.compile(r"\[\[([A-z0-9]*)\]\]")
+ZETTLR_NODE = re.compile(r"(\d{14})-.*")
 
 @dataclass
 class ZettelNode:
@@ -145,6 +146,9 @@ def main():
    
     parser_d = subparsers.add_parser('todo', aliases=['d'], help='todo')
 
+    parser_b = subparsers.add_parser('backlinks', aliases=['b'])
+    parser_b.add_argument('filename', type=str, help='File to search backlinks for')
+
     parser_l = subparsers.add_parser('links', aliases=['l'])
     parser_l.add_argument('filename', type=str, help='File to search links for')
 
@@ -223,6 +227,14 @@ def main():
                 md_parser = marko.Markdown()
                 parsed = md_parser.parse(f.read())
                 print(list(find_links_in_markdown_text_recursive(parsed)))
+    elif args.command in ("backlinks", "b"):
+        from pathlib import Path
+        basefilename = Path(args.filename).stem
+        search_term = basefilename
+        if result := ZETTLR_NODE.search(basefilename):
+            search_term = result.group(0)
+        result = subprocess.run(f"grep --include=*.md -R {search_term} {WIKI_PATH}".split(), capture_output=True)
+        print(result.stdout.decode())
     elif args.command in ("link_ratio", 'lr'):
         if not os.path.exists(args.filename):
             print("File does not exist")
