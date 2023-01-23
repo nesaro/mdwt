@@ -230,9 +230,9 @@ def main():
     elif args.command in ("backlinks", "b"):
         from pathlib import Path
         basefilename = Path(args.filename).stem
-        search_term = basefilename
+        search_term = basefilename.strip()
         if result := ZETTLR_NODE.search(basefilename):
-            search_term = result.group(0)
+            search_term = result.group(1)
         result = subprocess.run(f"grep --include=*.md -R {search_term} {WIKI_PATH}".split(), capture_output=True)
         print(result.stdout.decode())
     elif args.command in ("link_ratio", 'lr'):
