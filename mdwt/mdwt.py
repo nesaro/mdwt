@@ -234,7 +234,9 @@ def main():
         if result := ZETTLR_NODE.search(basefilename):
             search_term = result.group(1)
         result = subprocess.run(f"grep --include=*.md -R {search_term} {WIKI_PATH}".split(), capture_output=True)
-        print(result.stdout.decode())
+        for line in result.stdout.decode().split("\n"):
+            if line:
+                print(line)
     elif args.command in ("link_ratio", 'lr'):
         if not os.path.exists(args.filename):
             print("File does not exist")
