@@ -227,6 +227,30 @@ def main():
                 md_parser = marko.Markdown()
                 parsed = md_parser.parse(f.read())
                 print(list(find_links_in_markdown_text_recursive(parsed)))
+    elif args.command in ("populate_backlinks", "p"):
+        links = {} # dict[path, set]
+        existing_backlinks = {} # dict[path, (start,end, content)]
+        file_paths = glob.glob(os.path.join(WIKI_PATH, '**/*.md'), recursive=True)
+        for path in file_paths:
+            with open(path) as f:
+                content = f.read()
+                start, end = find_start_and_end_of_existing_backlinks(content)
+                content_as_lines = content.split("\n")
+                existing_backlinks_content = content_as_lines[start:end]
+                existing_backlinks_positions[path] = start, end, existing_backlinks_content
+                del content_as_lines[start:end]
+                set_of_links = find_links_in_string(content)
+                links[path] = set_of_links
+
+        for path in filepaths:
+            normalised_path = normalised_path(path) 
+            backlinks = {x for x,y in links.items() if normalised_path in y}
+            backlinks_as_text = convert_backlinks_to_text(backlinks)
+            start, end, existing_backlinks_content = existing_backlinks[path]
+            if existing_backlinks_content == backlinks_as_text:
+                continue
+            overwrite_file(path, start, end, backlinks_as_text)
+
     elif args.command in ("backlinks", "b"):
         from pathlib import Path
         basefilename = Path(args.filename).stem
