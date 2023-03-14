@@ -66,9 +66,13 @@ def get_print_report_task(report_name, action):
             due_date, task_id, description = line.split(maxsplit=2)
         except ValueError:
             continue
-        due_date = datetime.date.fromisoformat(due_date)
-        description = f"{action}:{description} {task_id}"
-        yield DateFromTaskWarrior(date=due_date, text=description)
+        try:
+            due_date = datetime.date.fromisoformat(due_date)
+        except ValueError: # some descriptions continue to the next line
+            continue
+        else:
+            description = f"{action}:{description} {task_id}"
+            yield DateFromTaskWarrior(date=due_date, text=description)
 
 def get_due_tasks():
     yield from get_print_report_task("printdue", "due")
