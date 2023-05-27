@@ -152,6 +152,6 @@ def print_projects_with_aliases_and_skip(known_aliases, skip, context):
             continue
         elif full_name in known_aliases:
             link = known_aliases[full_name]
-            full_name = f"[{full_name}]({link})"
+            full_name = f"{full_name}: [[{link}]]"
         #cog.outl(f"{full_name}\t{task_count}")
         cog.outl(f" * {full_name}")
