@@ -8,6 +8,8 @@ from .mdwt import HOME_PATH, WIKI_PATH
 
 TODAY = datetime.date.today()
 
+TASK_DRY_RUN_FLAGS = "rc.gc=0 rc.recurrence=0"
+
 @dataclass
 class DateFromTaskWarrior:
     date: datetime.date
@@ -58,7 +60,7 @@ def print_markdown_node(marko_node):
 #    cog.out(result.stdout.decode());cog.outl("")
 
 def get_print_report_task(report_name, action):
-    task_result = subprocess.run(f"task rc.context= {report_name}".split(), capture_output=True)
+    task_result = subprocess.run(f"task {TASK_DRY_RUN_FLAGS} rc.context= {report_name}".split(), capture_output=True)
     result_string = task_result.stdout.decode()
     lines = result_string.split("\n")
     for line in lines[3:]:
@@ -123,11 +125,11 @@ def print_active(filename):
 
 
 def print_tasks(predicate:str):
-    result = subprocess.run(f"task {predicate}".split(), capture_output=True)
+    result = subprocess.run(f"task {TASK_DRY_RUN_FLAGS} {predicate}".split(), capture_output=True)
     cog.out(result.stdout.decode())
 
 def print_projects_with_aliases_and_skip(known_aliases, skip, context):
-    result = subprocess.run(f"task rc.context={context} projects".split(), capture_output=True)
+    result = subprocess.run(f"task {TASK_DRY_RUN_FLAGS} rc.context={context} projects".split(), capture_output=True)
     result_string = result.stdout.decode()
     stack = []
     lines = result_string.split("\n")
