@@ -5,15 +5,12 @@ import argparse
 import subprocess
 import os
 import sys
-import marko
 import glob
 from typing import List
 from dataclasses import dataclass, field
 import datetime
 import random
 import re
-
-
 
 SAMPLE_LIMIT = 6000
 HOME_PATH = os.environ['HOME']
@@ -94,6 +91,7 @@ def extract_datetime_from_path(x, metadata):
 
 
 def find_links_in_markdown_text_recursive(marko_node):
+    import marko
     if isinstance(marko_node, marko.inline.Link):
         yield marko_node.dest, marko_node.children[0].children
     elif hasattr(marko_node, 'children') and not isinstance(marko_node.children, str):
@@ -106,6 +104,7 @@ def find_links_in_markdown_text_recursive(marko_node):
             print(link_content)
 
 def find_links_in_file(path):
+    import marko
     with open(path) as f:
         md_parser = marko.Markdown()
         parsed = md_parser.parse(f.read())
@@ -224,6 +223,7 @@ def main():
             sys.exit(1)
         else:
             with open(args.filename) as f:
+                import marko
                 md_parser = marko.Markdown()
                 parsed = md_parser.parse(f.read())
                 print(list(find_links_in_markdown_text_recursive(parsed)))
@@ -244,6 +244,7 @@ def main():
         else:
             with open(args.filename) as f:
                 file_content = f.read()
+                import marko
                 md_parser = marko.Markdown()
                 parsed = md_parser.parse(file_content)
                 number_of_links = len(list(find_links_in_markdown_text_recursive(parsed)))
