@@ -86,3 +86,6 @@ def generate_current_page_tasks():
     search_term = f"all +ANNOTATED /{current_file_name}/"
     return generate_tasks(search_term)
 
+def print_current_page_tasks():
+    cog.outl(generate_current_page_tasks())
+
