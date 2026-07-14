@@ -16,7 +16,6 @@ SAMPLE_LIMIT = 6000
 HOME_PATH = os.environ['HOME']
 WIKI_PATH = os.path.join(HOME_PATH, 'wiki/')
 METADATA_FILE = os.path.join(HOME_PATH, 'wiki.metadata.yaml')
-ZETTLR_LINK = re.compile(r"\[\[([A-z0-9]*)\]\]")
 ZETTLR_NODE = re.compile(r"(\d{14})-.*")
 
 @dataclass
@@ -88,29 +87,6 @@ def extract_datetime_from_path(x, metadata):
             metadata[x] = {}
         metadata[x]['added_to_repo_on'] = result
     return metadata[x].get('added_to_repo_on')
-
-
-def find_links_in_markdown_text_recursive(marko_node):
-    import marko
-    if isinstance(marko_node, marko.inline.Link):
-        yield marko_node.dest, marko_node.children[0].children
-    elif hasattr(marko_node, 'children') and not isinstance(marko_node.children, str):
-        for child in marko_node.children:
-            yield from find_links_in_markdown_text_recursive(child)
-    elif isinstance(marko_node, marko.inline.RawText):
-        content = marko_node.children
-        if search:= ZETTLR_LINK.search(content):
-            link_content = search.group(1)
-            print(link_content)
-
-def find_links_in_file(path):
-    import marko
-    with open(path) as f:
-        md_parser = marko.Markdown()
-        parsed = md_parser.parse(f.read())
-        result = [x[0] for x in find_links_in_markdown_text_recursive(parsed)]
-        print(result)
-        return result
 
 
 def to_relative_root_path(current_path, relative_path):
@@ -222,6 +198,7 @@ def main():
             print("File does not exist")
             sys.exit(1)
         else:
+            from .markdown import find_links_in_markdown_text_recursive
             with open(args.filename) as f:
                 import marko
                 md_parser = marko.Markdown()
@@ -245,6 +222,7 @@ def main():
             with open(args.filename) as f:
                 file_content = f.read()
                 import marko
+                from .markdown import find_links_in_markdown_text_recursive
                 md_parser = marko.Markdown()
                 parsed = md_parser.parse(file_content)
                 number_of_links = len(list(find_links_in_markdown_text_recursive(parsed)))
