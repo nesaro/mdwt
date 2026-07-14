@@ -1,12 +1,12 @@
 """Functions that generate lists and trees of nodes emulating a
 dependency tree"""
 
-from .tools import get_file_base_name
+from .tools import get_file_base_name, WIKI_PATH
 
 def get_file_base_name_and_prefix(full_path):
     current_file_name = os.path.basename(full_path)
     current_file_base_name, *_ = os.path.splitext(current_file_name)
-    return current_file_base_name, os.path.relpath(os.path.dirname(full_path), start="/home/nesaro/wiki/")
+    return current_file_base_name, os.path.relpath(os.path.dirname(full_path), start=WIKI_PATH)
 
 class ZettelTree:
     def __init__(self, content, prefix=""):
