@@ -104,6 +104,7 @@ def to_relative_root_path(current_path, relative_path):
 def find_links_in_node(node: ZettelNode):
     path = generate_path_from_name(node.name)
     print(path)
+    from .markdown import find_links_in_file
     result = [to_relative_root_path(node.folder, x) for x in find_links_in_file(path)]
     print(node, result)
     return result
@@ -180,6 +181,7 @@ def main():
             if root != "zettelKasten" and back_mention == "zettelKasten":
                 continue
             #G.add_node(back_mention)
+            from .markdown import find_links_in_file
             try:
                 destinations = find_links_in_file(generate_path_from_name(back_mention))
             except Exception:
