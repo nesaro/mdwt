@@ -10,7 +10,6 @@ import glob
 from typing import List
 from dataclasses import dataclass, field
 import datetime
-import yaml
 import random
 import re
 
@@ -70,6 +69,7 @@ def generate_path_from_name(x):
 
 @contextmanager
 def metadata_context():
+    import yaml
     try:
         if os.path.exists(METADATA_FILE):
             with open(METADATA_FILE) as f:
