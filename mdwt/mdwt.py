@@ -108,11 +108,10 @@ def find_links_in_node(node: ZettelNode):
     result = [to_relative_root_path(node.folder, x) for x in find_links_in_file(path)]
     print(node, result)
     return result
-    
 
 def discover_files_that_mention_word(word):
     import subprocess
-    sp = subprocess.run(['ag', '-l', '-G', '\\\*.md', '-Q', word, WIKI_PATH], capture_output=True)
+    sp = subprocess.run(['ag', '-l', '-G', r'\\\*.md', '-Q', word, WIKI_PATH], capture_output=True)
     return sp.stdout.decode().split()
     
 def main():
