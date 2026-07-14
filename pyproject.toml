@@ -3,7 +3,7 @@ requires = ["hatchling >= 1.26"]
 build-backend = "hatchling.build"
 
 [project]
-name = "mdwt_YOUR_USERNAME_HERE"
+name = "mdwt"
 version = "0.0.1"
 authors = [
   { name="Nestor Arocha", email="n@nestorarocha.com" },
@@ -11,13 +11,24 @@ authors = [
 description = "A small example package"
 readme = "README.md"
 requires-python = ">=3.9"
+dependencies = [
+  "marko==1.1.0",
+  "matplotlib",
+]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
 ]
-license = "GPLv3"
+license = "GPL-3.0-only"
 license-files = ["LICENSE"]
+
+[project.optional-dependencies]
+zettelkasten = ["PyYAML==6.0.3"]
+graph = ["networkx", "matplotlib", "scipy", "PyYAML==6.0.3"]
 
 [project.urls]
 Homepage = "https://codeberg.org/nesaro/mdwt"
 Issues = "https://github.com/pypa/sampleproject/issues"
+
+[project.scripts]
+mdwt = "mdwt.mdwt:main"
