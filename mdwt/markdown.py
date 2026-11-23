@@ -1,5 +1,4 @@
 import re
-import cog
 
 ZETTLR_LINK = re.compile(r"\[\[([A-z0-9]*)\]\]")
 
@@ -8,6 +7,7 @@ def print_markdown_node(marko_node):
         for child in marko_node.children:
             print_markdown_node(child)
     elif hasattr(marko_node, 'children') and isinstance(marko_node.children, str):
+        import cog
         cog.outl(marko_node.children)
 
 def print_active(filename:str):
