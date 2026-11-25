@@ -1,6 +1,7 @@
 import re
 
-ZETTLR_LINK = re.compile(r"\[\[([A-z0-9]*)\]\]")
+ZETTLR_LINK = re.compile(r"\[\[([A-z0-9\-_]*?)\]\]")
+
 
 def print_markdown_node(marko_node):
     if hasattr(marko_node, 'children') and not isinstance(marko_node.children, str):
@@ -31,16 +32,20 @@ def print_active(filename:str):
 
 def find_links_in_markdown_text_recursive(marko_node):
     import marko
+
+    children_text = isinstance(getattr(marko_node, "children", None), str)
     if isinstance(marko_node, marko.inline.Link):
-        yield marko_node.dest, marko_node.children[0].children
-    elif hasattr(marko_node, 'children') and not isinstance(marko_node.children, str):
+        if marko_node.children:
+            yield marko_node.dest, marko_node.children[0].children
+    elif hasattr(marko_node, "children") and not children_text:
         for child in marko_node.children:
             yield from find_links_in_markdown_text_recursive(child)
-    elif isinstance(marko_node, marko.inline.RawText):
+    elif isinstance(marko_node, marko.inline.RawText) or children_text:
         content = marko_node.children
-        if search:= ZETTLR_LINK.search(content):
-            link_content = search.group(1)
-            print(link_content)
+        if search := ZETTLR_LINK.findall(content):
+            for found_link in search:
+                yield found_link, None
+
 
 def find_links_in_file(path):
     import marko
