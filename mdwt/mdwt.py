@@ -232,21 +232,26 @@ def main():
                     print(number_of_words * 10, args.filename)
                 else:
                     print(number_of_words // number_of_links, args.filename)
-    elif args.command in ("todo", 'd'):
-        file_paths = glob.glob(os.path.join(WIKI_PATH, '*.md'))
+    elif args.command in ("todo", "d"):
+        file_paths = glob.glob(os.path.join(WIKI_PATH, "**/*.md"), recursive=True)
         for file_path in file_paths:
             with open(file_path) as f:
                 try:
+                    todos_found = []
                     for line in f.readlines():
-                        #print(line)
                         import re
-                        current_match = re.match(r'^\d*TODO:\d*(.*)\d*', line) # TODO Add DONE
+
+                        current_match = re.match(
+                            r"^\d*TODO:\d*(.*)\d*", line
+                        )  # TODO Add DONE
                         if current_match:
                             todo_expression = current_match.groups()[0]
-                            if 'DONE' in todo_expression:
+                            if "DONE" in todo_expression:
                                 pass
                             else:
-                                print(todo_expression.strip())
+                                todos_found.append(todo_expression.strip())
+                    if todos_found:
+                        print(file_path + ": " + "\n".join(todos_found))
 
                 except UnicodeDecodeError:
                     print(f"file {file_path} failed")
@@ -264,6 +269,7 @@ def main():
                     print(f"failed {path}")
                     continue
                 import re
+
                 if re.match(r"\d{4}-\d{2}-\d{2}", new_node.name):
                     continue
                 if re.match(r"diary\/.*", new_node.name):
