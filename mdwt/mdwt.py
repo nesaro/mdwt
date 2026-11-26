@@ -194,17 +194,18 @@ def main():
         nx.draw(G, pos, with_labels=True)
         plt.show()
                 
-    elif args.command in ("links", 'l'):
+    elif args.command in ("links", "l"):
         if not os.path.exists(args.filename):
             print("File does not exist")
             sys.exit(1)
-        else:
-            from .markdown import find_links_in_markdown_text_recursive
-            with open(args.filename) as f:
-                import marko
-                md_parser = marko.Markdown()
-                parsed = md_parser.parse(f.read())
-                print(list(find_links_in_markdown_text_recursive(parsed)))
+        from .markdown import find_links_in_markdown_text_recursive
+
+        with open(args.filename) as f:
+            import marko
+
+            md_parser = marko.Markdown()
+            parsed = md_parser.parse(f.read())
+            print([x[0] for x in find_links_in_markdown_text_recursive(parsed)])
     elif args.command in ("backlinks", "b"):
         from pathlib import Path
         basefilename = Path(args.filename).stem
